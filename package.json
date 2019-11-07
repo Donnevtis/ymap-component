@@ -5,8 +5,18 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "rollup": "npm run rollup:unpkg & npm run rollup:es & npm run rollup:umd",
+    "rollup:es": "rollup --config src/rollup/rollup.config.js --format es --file dist/rollup-esmbundler.esm.js",
+    "rollup:umd": "rollup --config src/rollup/rollup.config.js --format umd --file dist/rollup-esmbundler.umd.js",
+    "rollup:unpkg": "rollup --config src/rollup/rollup.config.js --format iife --file dist/rollup-esmbundler.min.js"
   },
+  "main": "dist/rollup-esmbundler.umd.js",
+  "module": "dist/rollup-esmbundler.esm.js",
+  "browser": {
+    "./sfc": "src/rollup-esmbundler.vue"
+  },
+  "unpkg": "dist/rollup-esmbundler.min.js",
   "dependencies": {
     "core-js": "^3.3.2",
     "vue": "^2.6.10"
@@ -18,6 +28,12 @@
     "babel-eslint": "^10.0.3",
     "eslint": "^5.16.0",
     "eslint-plugin-vue": "^5.0.0",
+    "rollup": "*",
+    "rollup-plugin-analyzer": "*",
+    "rollup-plugin-buble": "*",
+    "rollup-plugin-uglify-es": "*",
+    "rollup-plugin-vue": "*",
+    "vue-cli-plugin-rollup-esm-bundler": "^0.2.5",
     "vue-template-compiler": "^2.6.10"
   },
   "eslintConfig": {
@@ -29,7 +45,9 @@
       "plugin:vue/essential",
       "eslint:recommended"
     ],
-    "rules": {},
+    "rules": {
+      "no-console": "off"
+    },
     "parserOptions": {
       "parser": "babel-eslint"
     }
