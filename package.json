@@ -32,7 +32,7 @@
     "rollup-plugin-analyzer": "*",
     "rollup-plugin-buble": "*",
     "rollup-plugin-uglify-es": "*",
-    "rollup-plugin-vue": "*",
+    "rollup-plugin-vue": "^5.1.2",
     "vue-cli-plugin-rollup-esm-bundler": "^0.2.5",
     "vue-template-compiler": "^2.6.10"
   },
