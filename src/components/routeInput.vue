@@ -1,13 +1,17 @@
 <template>
-  <div class="input-wrap">
+  <div class="input-group mb-3">
+    <div class="input-group-prepend"></div>
     <input
+      class="form-control"
+      aria-label
+      aria-describedby="basic-addon1"
       type="text"
       :id="'suggest'+index"
       :placeholder="point.placeholder"
       v-model="point.value"
       @keyup.enter="$emit('addRoute')"
     />
-    <div class="input-close" @click="clearInput" />
+    <button class="btn btn-outline-secondary" @click="clearInput" type="button">close</button>
   </div>
 </template>
 

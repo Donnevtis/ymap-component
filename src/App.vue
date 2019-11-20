@@ -1,27 +1,43 @@
 <template>
-  <div id="Ymap">
-    <div id="map">
-      <div v-if="!mapIsLoaded" class="spinner">
-        <div class="cube1"></div>
-        <div class="cube2"></div>
+  <div id="Ymap" class="container">
+    <div class="row">
+      <div id="map" class="col-md-8 col-sm-12 mb-4 mt-4 order-md-4">
+        <div v-if="!mapIsLoaded" class="spinner">
+          <div class="cube1"></div>
+          <div class="cube2"></div>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-12 mt-4 mb-4">
+        <div class="row">
+          <routeInput
+            v-for="(point, index) in points"
+            :key="index"
+            :point="point"
+            :points="points"
+            :index="index"
+            @addRoute="addRoute"
+          />
+        </div>
+
+        <div class="row">
+          <button
+            class="btn btn-secondary btn-md btn-block"
+            @click="addPoint"
+          >Добавить точку назначения</button>
+          <button class="btn btn-primary btn-md btn-block" @click="toCount">Рассчитать</button>
+        </div>
+        <br />
+        <h6>Общее расстояние: {{distance.all + ' км'}}</h6>
+        <h6 v-if="distance.inside">Расстояние в пределах МКАД: {{distance.inside + ' км'}}</h6>
+        <h6 v-if="distance.outside">Расстояние за МКАД: {{distance.outside + ' км'}}</h6>
       </div>
     </div>
-
-    <routeInput
-      v-for="(point, index) in points"
-      :key="index"
-      :point="point"
-      :points="points"
-      :index="index"
-      @addRoute="addRoute"
-    />
-    <button @click="addPoint">Добавить точку назначения</button>
-    <button @click="toCount">Рассчитать</button>
   </div>
 </template>
 
 <script>
 import routeInput from "./components/routeInput";
+
 export default {
   name: "Ymap",
   data() {
@@ -30,7 +46,12 @@ export default {
       points: [
         { placeholder: "Укажите точку отправления", value: "" },
         { placeholder: "Укажите точку назначения", value: "" }
-      ]
+      ],
+      distance: {
+        inside: 0,
+        outside: 0,
+        all: 0
+      }
     };
   },
   components: {
@@ -69,50 +90,63 @@ export default {
       const activeRoute = this.route.getActiveRoute() || null;
       // Вывод информации о маршруте.
       if (!activeRoute) return;
+      const json = require("./assets/moscow.json");
 
-      fetch("./moscow.json")
-        .then(res => res.json())
-        .then(json => {
-          const moscowPolygon = new this.ymaps.Polygon(json.coordinates);
-          moscowPolygon.options.set("visible", false);
-          this.myMap.geoObjects.add(moscowPolygon);
-          const pathsObjects = activeRoute.getPaths(),
-            edges = [];
+      const moscowPolygon = new this.ymaps.Polygon(json.coordinates);
+      moscowPolygon.options.set("visible", false);
+      this.myMap.geoObjects.add(moscowPolygon);
+      const pathsObjects = activeRoute.getPaths(),
+        edges = [];
 
-          // Переберем все сегменты и разобьем их на отрезки.
-          pathsObjects.each(path => {
-            const coordinates = path.properties.get("coordinates");
-            for (var i = 1, l = coordinates.length; i < l; i++) {
-              edges.push({
-                type: "LineString",
-                coordinates: [coordinates[i], coordinates[i - 1]]
-              });
-            }
+      // Переберем все сегменты и разобьем их на отрезки.
+
+      // function* pathsObjects() {}
+      pathsObjects.each(path => {
+        const coordinates = path.properties.get("coordinates");
+        for (var i = 1, l = coordinates.length; i < l; i++) {
+          edges.push({
+            type: "LineString",
+            coordinates: [coordinates[i], coordinates[i - 1]]
           });
+        }
+      });
 
-          const routeObjects = this.ymaps
-              .geoQuery(edges)
-              .add(this.route.getWayPoints())
-              .setOptions("visible", false)
-              .addToMap(this.myMap),
-            objectsInMoscow = routeObjects.searchInside(moscowPolygon);
-          // boundaryObjects = routeObjects.searchIntersect(moscowPolygon);
+      const routeObjects = this.ymaps
+          .geoQuery(edges)
+          // .add(this.route.getWayPoints())
+          .setOptions("visible", false)
+          .addToMap(this.myMap),
+        objectsInMoscow = routeObjects.searchInside(moscowPolygon);
+      // boundaryObjects = routeObjects.searchIntersect(moscowPolygon);
 
-          const zamkad =
-            this.getMeters(routeObjects) - this.getMeters(objectsInMoscow);
-          console.log(zamkad);
-        });
+      this.distance = this.getMeters(routeObjects, objectsInMoscow);
     },
-    getMeters(geoObj) {
-      let distance = 0;
-      for (let i = 0; i < geoObj.getLength(); i++) {
-        const coords = geoObj.get(i).geometry.getCoordinates();
-        distance += this.ymaps.coordSystem.geo.getDistance(
-          coords[0],
-          coords[1]
-        );
+    getMeters(geoAll, geoInside) {
+      function* generatePathLength(geoObj) {
+        for (let i = 0; i < geoObj.getLength(); i++) {
+          const coords = geoObj.get(i).geometry.getCoordinates();
+          yield this.ymaps.coordSystem.geo.getDistance(coords[0], coords[1]);
+        }
       }
-      return distance.toFixed(0);
+      function generateDistance(geoObj) {
+        let distance = 0;
+        for (const key of generatePathLength.call(this, geoObj)) {
+          distance += key;
+        }
+        return distance;
+      }
+
+      const all = generateDistance.call(this, geoAll);
+      const inside = generateDistance.call(this, geoInside);
+      const outside = all - inside;
+
+      const distances = { all, inside, outside };
+
+      for (let prop in distances) {
+        distances[prop] = (distances[prop].toFixed(0) / 1000).toFixed(1);
+      }
+
+      return distances;
     }
   },
   mounted() {
@@ -175,20 +209,23 @@ export default {
 
 <style>
 #app {
-  position: absolute;
+  /* position: absolute; */
   font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
-  height: 600px;
-  width: 600px;
+  /* height: 600px; */
+  /* width: 600px; */
 }
 #map {
-  position: relative;
-  width: 600px;
-  height: 600px;
+  height: 60vh;
+}
+@media (max-width: 768px) {
+  #map {
+    height: 100vmin;
+  }
 }
 .spinner {
   margin: 0 auto;
