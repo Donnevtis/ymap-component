@@ -15,7 +15,8 @@
             :point="point"
             :points="points"
             :index="index"
-            @addRoute="addRoute"
+            @focus="focus"
+            ref="routeInput"
           />
         </div>
 
@@ -40,12 +41,17 @@ import routeInput from "./components/routeInput";
 
 export default {
   name: "Ymap",
+  components: {
+    routeInput
+  },
+
   data() {
     return {
       mapIsLoaded: false,
+      adress: "",
       points: [
-        { placeholder: "Укажите точку отправления", value: "" },
-        { placeholder: "Укажите точку назначения", value: "" }
+        { placeholder: "Укажите точку отправления", adress: "" },
+        { placeholder: "Укажите точку назначения", adress: "" }
       ],
       distance: {
         inside: 0,
@@ -54,24 +60,29 @@ export default {
       }
     };
   },
-  components: {
-    routeInput
-  },
+
   computed: {
     pointsArray() {
-      return this.points.map(item => item.value);
+      return this.points
+        .map(item => (item.adress ? item.adress : null))
+        .filter(item => item !== null);
+    }
+  },
+  watch: {
+    pointsArray() {
+      this.addRoute();
     }
   },
   methods: {
-    addEventOnSuggest(point, index) {
-      const suggestView = new this.ymaps.SuggestView("suggest" + index);
-      suggestView.events.add("select", event => {
-        point.value = event.get("item").displayName;
-        this.addRoute();
-      });
+    focus() {
+      const targets = this.$refs.routeInput;
+      const empty = targets.find(item => !item.point.adress);
+      if (empty) empty.focus();
     },
+
     addRoute() {
       //внести изменения в маршрут
+      if (!this.pointsArray.length) return;
       this.route.model.setReferencePoints(this.pointsArray);
       //изменить маштаб карты в соотвествии маршруту единожды
       this.route.events.once("boundschange", () => {
@@ -81,9 +92,9 @@ export default {
       });
     },
     addPoint() {
-      this.points.push({ placeholder: "Укажите точку назначения", value: "" });
-      const i = this.points.length - 1;
-      this.$nextTick().then(() => this.addEventOnSuggest(this.points[i], i));
+      this.points.push({ placeholder: "Укажите точку назначения", adress: "" });
+      const refs = this.$refs.routeInput;
+      this.$nextTick().then(() => refs[refs.length - 1].focus());
     },
     toCount() {
       // Получение ссылки на активный маршрут.
@@ -99,11 +110,9 @@ export default {
         edges = [];
 
       // Переберем все сегменты и разобьем их на отрезки.
-
-      // function* pathsObjects() {}
       pathsObjects.each(path => {
         const coordinates = path.properties.get("coordinates");
-        for (var i = 1, l = coordinates.length; i < l; i++) {
+        for (let i = 1, l = coordinates.length; i < l; i++) {
           edges.push({
             type: "LineString",
             coordinates: [coordinates[i], coordinates[i - 1]]
@@ -150,59 +159,38 @@ export default {
     }
   },
   mounted() {
-    function send() {
-      return new Promise(res => {
-        this.yandexMapScript = document.createElement("SCRIPT");
-        const apiKey = "931c09e3-a95f-458e-ad4a-bfd52f0a7338",
-          lang = "ru_RU",
-          version = "2.1",
-          coordorder = "latlong",
-          debug = false;
-        const mode = debug ? "debug" : "release";
-        const settingsPart = `lang=${lang}${apiKey &&
-          `&apikey=${apiKey}`}&mode=${mode}&coordorder=${coordorder}`;
-        const link = `https://api-maps.yandex.ru/${version}/?${settingsPart}`;
-        this.yandexMapScript.setAttribute("src", link);
-        this.yandexMapScript.setAttribute("async", "");
-        this.yandexMapScript.setAttribute("defer", "");
-        this.$el.appendChild(this.yandexMapScript);
-        this.yandexMapScript.onload = () => {
-          res();
-        };
-      });
-    }
-
-    send.call(this).then(() => {
+    window.ymaps.ready(() => {
       this.ymaps = window.ymaps;
-      this.ymaps.ready(() => {
-        this.myMap = new this.ymaps.Map("map", {
-          center: [55.76, 37.64],
-          zoom: 10,
-          controls: []
-        });
-        //создать пустой маршрут
-        this.route = new this.ymaps.multiRouter.MultiRoute(
-          {
-            referencePoints: ["метро сокол", "сукромка 6"],
-            params: {
-              avoidTrafficJams: false
-            }
-          },
-          {
-            // Автоматически устанавливать границы карты так,
-            // чтобы маршрут был виден целиком.
-            boundsAutoApply: true
-          }
-        );
-        this.route.editor.start();
-        this.myMap.geoObjects.add(this.route, 1);
-        //навесить подсказки на поля ввода
-        this.points.forEach((point, index) =>
-          this.addEventOnSuggest(point, index)
-        );
-        this.mapIsLoaded = true;
+      this.myMap = new this.ymaps.Map("map", {
+        center: [55.76, 37.64],
+        zoom: 10,
+        controls: []
       });
+      //  создать пустой маршрут
+      this.route = new this.ymaps.multiRouter.MultiRoute(
+        {
+          referencePoints: [],
+          params: {
+            avoidTrafficJams: false
+          }
+        },
+        {
+          // Автоматически устанавливать границы карты так,
+          // чтобы маршрут был виден целиком.
+          boundsAutoApply: true
+        }
+      );
+      this.route.editor.start();
+      this.myMap.geoObjects.add(this.route, 1);
+      //навесить подсказки на поля ввода
+      // this.points.forEach((point, index) =>
+      //   this.addEventOnSuggest(point, index)
+      // );
+      this.mapIsLoaded = true;
     });
+  },
+  beforeDestroy() {
+    // this.myMap.destroy();
   }
 };
 </script>
