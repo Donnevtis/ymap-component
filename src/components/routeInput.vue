@@ -20,11 +20,7 @@
 <script>
 export default {
   props: ["point", "points", "index"],
-  data() {
-    return {
-      adress: ""
-    };
-  },
+
   directives: {
     focus: {
       // определение директивы

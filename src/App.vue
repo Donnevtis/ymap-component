@@ -33,6 +33,7 @@
         <h6 v-if="distance.outside">Расстояние за МКАД: {{distance.outside + ' км'}}</h6>
       </div>
     </div>
+    <forma />
   </div>
 </template>
 
@@ -122,11 +123,9 @@ export default {
 
       const routeObjects = this.ymaps
           .geoQuery(edges)
-          // .add(this.route.getWayPoints())
           .setOptions("visible", false)
           .addToMap(this.myMap),
         objectsInMoscow = routeObjects.searchInside(moscowPolygon);
-      // boundaryObjects = routeObjects.searchIntersect(moscowPolygon);
 
       this.distance = this.getMeters(routeObjects, objectsInMoscow);
     },
@@ -144,13 +143,10 @@ export default {
         }
         return distance;
       }
-
       const all = generateDistance.call(this, geoAll);
       const inside = generateDistance.call(this, geoInside);
       const outside = all - inside;
-
       const distances = { all, inside, outside };
-
       for (let prop in distances) {
         distances[prop] = (distances[prop].toFixed(0) / 1000).toFixed(1);
       }
@@ -182,30 +178,23 @@ export default {
       );
       this.route.editor.start();
       this.myMap.geoObjects.add(this.route, 1);
-      //навесить подсказки на поля ввода
-      // this.points.forEach((point, index) =>
-      //   this.addEventOnSuggest(point, index)
-      // );
       this.mapIsLoaded = true;
     });
   },
   beforeDestroy() {
-    // this.myMap.destroy();
+    this.myMap.destroy();
   }
 };
 </script>
 
 <style>
 #app {
-  /* position: absolute; */
   font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
-  /* height: 600px; */
-  /* width: 600px; */
 }
 #map {
   height: 60vh;
