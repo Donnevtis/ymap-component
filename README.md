@@ -1,26 +1,38 @@
-# ymap
+# ymap-component
 
-## Project setup
+```
+Приложение - карта для сайта компании-перевозчика.
+
+Позволяет построить сложный маршут из нескольких точек назначения и узнать километраж внутри/снаружи МКАД.
+
+Стек:
+ -Vue.js
+ -Bootstrap
+ -Яндекс.Карты JavaScript API
+
+ -сборка Rollup в один файл.
+```
+
+## Установка
+
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
+### Режим разработки
+
 ```
 npm run serve
 ```
 
-### Compiles and minifies for production
+### Собрать для продакшна (.legacy.js - версия для старых браузеров)
+
 ```
 npm run build
 ```
 
-### Run your tests
-```
-npm run test
-```
-
 ### Lints and fixes files
+
 ```
 npm run lint
 ```
