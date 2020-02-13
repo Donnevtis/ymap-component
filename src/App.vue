@@ -7,14 +7,16 @@
           <div class="cube2"></div>
         </div>
       </div>
+
       <div class="col-md-4 col-sm-12 mt-4 mb-4">
         <div class="row">
           <routeInput
             v-for="(point, index) in points"
-            :key="index"
+            :key="point.id"
             :point="point"
-            :points="points"
             :index="index"
+            v-model="point.adress"
+            @clearInput="clearInput"
             @focus="focus"
             ref="routeInput"
           />
@@ -33,26 +35,26 @@
         <h6 v-if="distance.outside">Расстояние за МКАД: {{distance.outside + ' км'}}</h6>
       </div>
     </div>
-    <forma />
   </div>
 </template>
 
 <script>
-import routeInput from "./components/routeInput";
+import routeInput from "./components/routeInput.vue";
+import Coordinates from "./assets/moscow.json";
+import uuid from "uuid/v4";
 
 export default {
   name: "Ymap",
   components: {
     routeInput
   },
-
   data() {
     return {
       mapIsLoaded: false,
       adress: "",
       points: [
-        { placeholder: "Укажите точку отправления", adress: "" },
-        { placeholder: "Укажите точку назначения", adress: "" }
+        { placeholder: "Укажите точку отправления", adress: "", id: uuid() },
+        { placeholder: "Укажите точку назначения", adress: "", id: uuid() }
       ],
       distance: {
         inside: 0,
@@ -75,12 +77,21 @@ export default {
     }
   },
   methods: {
+    clearInput(index) {
+      if (this.points.length > 2) {
+        this.points.splice(index, 1);
+        if (index == 0) {
+          this.points[0].placeholder = "Укажите точку отправления";
+        }
+      } else {
+        this.points[index].adress = "";
+      }
+    },
     focus() {
       const targets = this.$refs.routeInput;
       const empty = targets.find(item => !item.point.adress);
       if (empty) empty.focus();
     },
-
     addRoute() {
       //внести изменения в маршрут
       if (!this.pointsArray.length) return;
@@ -93,7 +104,11 @@ export default {
       });
     },
     addPoint() {
-      this.points.push({ placeholder: "Укажите точку назначения", adress: "" });
+      this.points.push({
+        placeholder: "Укажите точку назначения",
+        adress: "",
+        id: uuid()
+      });
       const refs = this.$refs.routeInput;
       this.$nextTick().then(() => refs[refs.length - 1].focus());
     },
@@ -102,15 +117,14 @@ export default {
       const activeRoute = this.route.getActiveRoute() || null;
       // Вывод информации о маршруте.
       if (!activeRoute) return;
-      const json = require("./assets/moscow.json");
 
-      const moscowPolygon = new this.ymaps.Polygon(json.coordinates);
+      const moscowPolygon = new this.ymaps.Polygon(Coordinates);
       moscowPolygon.options.set("visible", false);
       this.myMap.geoObjects.add(moscowPolygon);
       const pathsObjects = activeRoute.getPaths(),
         edges = [];
 
-      // Переберем все сегменты и разобьем их на отрезки.
+      // Перебрать все сегменты и разобить их на отрезки.
       pathsObjects.each(path => {
         const coordinates = path.properties.get("coordinates");
         for (let i = 1, l = coordinates.length; i < l; i++) {
@@ -126,7 +140,6 @@ export default {
           .setOptions("visible", false)
           .addToMap(this.myMap),
         objectsInMoscow = routeObjects.searchInside(moscowPolygon);
-
       this.distance = this.getMeters(routeObjects, objectsInMoscow);
     },
     getMeters(geoAll, geoInside) {
