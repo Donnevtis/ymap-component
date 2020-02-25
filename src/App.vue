@@ -16,6 +16,7 @@
             :point="point"
             :index="index"
             v-model="point.adress"
+            @input="addRoute"
             @clearInput="clearInput"
             @focus="focus"
             ref="routeInput"
@@ -25,21 +26,63 @@
         <div class="row">
           <button
             class="btn btn-secondary btn-md btn-block"
-            @click="addPoint"
+            @click.prevent="addPoint"
           >Добавить точку назначения</button>
-          <button class="btn btn-primary btn-md btn-block" @click="toCount">Рассчитать</button>
         </div>
+
         <br />
-        <h6>Общее расстояние: {{distance.all + ' км'}}</h6>
+        <h6>
+          Общее расстояние:
+          <span>{{distance.all + ' км'}}</span>
+        </h6>
         <h6 v-if="distance.inside">Расстояние в пределах МКАД: {{distance.inside + ' км'}}</h6>
         <h6 v-if="distance.outside">Расстояние за МКАД: {{distance.outside + ' км'}}</h6>
+        <h6>
+          Сумма:
+          <span v-if="isSubmit">{{sum + '₽'}}</span>
+          <div v-else class="spinner-border text-secondary spinner-border-sm" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </h6>
+        <br />
+
+        <form v-if="isCounted" @submit.prevent="submit">
+          <div class="form-group">
+            <label for="inputEmail">Введите адрес для получения данных о заказе</label>
+            <input
+              type="email"
+              class="form-control"
+              id="inputEmail"
+              aria-describedby="emailHelp"
+              placeholder="email@example.com"
+              name="email"
+              required
+              v-model="email"
+            />
+          </div>
+
+          <input
+            :disabled="isSuccess|| loading"
+            type="submit"
+            class="btn btn-primary"
+            value="Отправить"
+          />
+
+          <div v-if="isSuccess" class="mt-3 alert alert-success" role="alert">Заявка принята</div>
+
+          <div v-else-if="loading" class="d-flex justify-content-center">
+            <div class="spinner-grow text-secondary" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import routeInput from "./components/routeInput.vue";
+import routeInput from "./components/RouteInput.vue";
 import Coordinates from "./assets/moscow.json";
 import uuid from "uuid/v4";
 
@@ -48,10 +91,15 @@ export default {
   components: {
     routeInput
   },
+
   data() {
     return {
+      email: "",
       mapIsLoaded: false,
-      adress: "",
+      isSuccess: false,
+      isSubmit: true,
+      isCounted: false,
+      loading: false,
       points: [
         { placeholder: "Укажите точку отправления", adress: "", id: uuid() },
         { placeholder: "Укажите точку назначения", adress: "", id: uuid() }
@@ -60,7 +108,8 @@ export default {
         inside: 0,
         outside: 0,
         all: 0
-      }
+      },
+      sum: 0
     };
   },
 
@@ -69,15 +118,19 @@ export default {
       return this.points
         .map(item => (item.adress ? item.adress : null))
         .filter(item => item !== null);
+    },
+    routeLength() {
+      return this.points.length;
     }
   },
   watch: {
-    pointsArray() {
-      this.addRoute();
+    routeLength(n, o) {
+      if (n < o) this.addRoute();
     }
   },
   methods: {
     clearInput(index) {
+      this.isCounted = false;
       if (this.points.length > 2) {
         this.points.splice(index, 1);
         if (index == 0) {
@@ -85,6 +138,13 @@ export default {
         }
       } else {
         this.points[index].adress = "";
+        this.distance = {
+          inside: 0,
+          outside: 0,
+          all: 0
+        };
+        this.sum = 0;
+        this.addRoute();
       }
     },
     focus() {
@@ -93,10 +153,13 @@ export default {
       if (empty) empty.focus();
     },
     addRoute() {
+      this.isSuccess = false;
       //внести изменения в маршрут
       if (!this.pointsArray.length) return;
       this.route.model.setReferencePoints(this.pointsArray);
-      //изменить маштаб карты в соотвествии маршруту единожды
+      //изменить маштаб и просчитать маршрут карты в соотвествии маршруту
+      if (this.pointsArray.length >= 2)
+        this.route.model.events.once("requestsuccess", () => this.toCount());
       this.route.events.once("boundschange", () => {
         this.myMap.setBounds(this.route.getBounds(), {
           checkZoomRange: true
@@ -104,6 +167,7 @@ export default {
       });
     },
     addPoint() {
+      this.isCounted = false;
       this.points.push({
         placeholder: "Укажите точку назначения",
         adress: "",
@@ -112,12 +176,56 @@ export default {
       const refs = this.$refs.routeInput;
       this.$nextTick().then(() => refs[refs.length - 1].focus());
     },
+    getSum() {
+      this.isSubmit = false;
+      fetch(
+        "https://bkdqyto4m7.execute-api.us-east-1.amazonaws.com/prod/count",
+        {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(this.distance)
+        }
+      )
+        .then(res => res.json())
+        .then(res => {
+          this.sum = res;
+          this.isSubmit = this.isCounted = true;
+        });
+    },
+    submit() {
+      const { inside, outside } = this.distance;
+      this.loading = true;
+      fetch(
+        "https://bkdqyto4m7.execute-api.us-east-1.amazonaws.com/prod/submit",
+        {
+          method: "POST",
+          mode: "cors",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            inside,
+            outside,
+            adresses: this.pointsArray,
+            email: this.email
+          })
+        }
+      ).then(res => {
+        if (res.ok) {
+          this.loading = false;
+          this.isSuccess = true;
+        }
+      });
+    },
     toCount() {
       // Получение ссылки на активный маршрут.
       const activeRoute = this.route.getActiveRoute() || null;
-      // Вывод информации о маршруте.
       if (!activeRoute) return;
 
+      // Вывод информации о маршруте.
       const moscowPolygon = new this.ymaps.Polygon(Coordinates);
       moscowPolygon.options.set("visible", false);
       this.myMap.geoObjects.add(moscowPolygon);
@@ -140,9 +248,15 @@ export default {
           .setOptions("visible", false)
           .addToMap(this.myMap),
         objectsInMoscow = routeObjects.searchInside(moscowPolygon);
-      this.distance = this.getMeters(routeObjects, objectsInMoscow);
+      this.distance = this.getMeters(
+        routeObjects,
+        objectsInMoscow,
+        activeRoute
+      );
+
+      this.getSum();
     },
-    getMeters(geoAll, geoInside) {
+    getMeters(geoAll, geoInside, activeRoute) {
       function* generatePathLength(geoObj) {
         for (let i = 0; i < geoObj.getLength(); i++) {
           const coords = geoObj.get(i).geometry.getCoordinates();
@@ -156,12 +270,12 @@ export default {
         }
         return distance;
       }
-      const all = generateDistance.call(this, geoAll);
+      const all = activeRoute.properties.get("distance").value;
       const inside = generateDistance.call(this, geoInside);
       const outside = all - inside;
       const distances = { all, inside, outside };
       for (let prop in distances) {
-        distances[prop] = (distances[prop].toFixed(0) / 1000).toFixed(1);
+        distances[prop] = +(distances[prop] / 1000).toFixed(1);
       }
 
       return distances;
@@ -211,11 +325,6 @@ export default {
 }
 #map {
   height: 60vh;
-}
-@media (max-width: 768px) {
-  #map {
-    height: 100vmin;
-  }
 }
 .spinner {
   margin: 0 auto;
@@ -280,6 +389,12 @@ export default {
   100% {
     transform: rotate(-360deg);
     -webkit-transform: rotate(-360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  #map {
+    height: 100vmin;
   }
 }
 </style>

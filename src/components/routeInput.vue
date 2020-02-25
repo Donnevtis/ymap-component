@@ -2,43 +2,48 @@
   <div class="input-group mb-3">
     <div class="input-group-prepend"></div>
     <input
+      @keyup.enter="onInput"
       class="form-control"
       :autofocus="index == 0"
-      aria-label
-      aria-describedby="basic-addon1"
+      aria-describedby="adress-input"
       type="text"
       :id="'suggest' + index"
       :placeholder="point.placeholder"
       ref="input"
+      :required="index < 2 ? true : false"
     />
-    <button class="btn btn-outline-secondary" @click="$emit('clearInput',index)" type="button">close</button>
+    <button class="btn btn-outline-secondary" @click="clearField" type="button">удалить</button>
   </div>
 </template>
 
 <script>
-// import uuidv4 from "uuid/v4";
-
 export default {
   props: ["point", "index"],
-  computed: {
-    newAdress() {
-      return this.$refs.input.value;
-    }
-  },
   methods: {
+    onInput() {
+      //вызвать событие, если не выбрана подсказка
+      if (this.suggestView.state.get("panelClosed")) {
+        this.$emit("input", this.$refs.input.value);
+        this.blur();
+      }
+    },
     focus() {
       this.$refs.input.focus();
     },
     blur() {
       this.$emit("focus");
       this.$refs.input.blur();
+    },
+    clearField() {
+      this.$refs.input.value = "";
+      this.$emit("clearInput", this.index);
     }
   },
-  mounted() {
+  created() {
     window.ymaps.ready(() => {
-      const suggestView = new window.ymaps.SuggestView(this.$refs.input.id);
-      suggestView.events.add("select", event => {
-        this.$emit("input", event.get("item").displayName);
+      this.suggestView = new window.ymaps.SuggestView(this.$refs.input.id);
+      this.suggestView.events.add("select", event => {
+        this.$emit("input", event.get("item").value);
         this.blur();
       });
     });
