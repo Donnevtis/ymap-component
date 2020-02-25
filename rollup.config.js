@@ -1,3 +1,4 @@
+import cleaner from 'rollup-plugin-cleaner';
 import commonjs from '@rollup/plugin-commonjs'
 import resolve from '@rollup/plugin-node-resolve'
 import babel from 'rollup-plugin-babel'
@@ -18,11 +19,14 @@ const options = (target, legacy) => ({
         entryFileNames: `ymap${legacy ? '.legacy' : ''}.[hash].js`
     },
     plugins: [
+        cleaner({
+            targets: ['dist/']
+        }),
         commonjs(),
         resolve({ browser: true }),
         json({ compact: true }),
         replace({
-            'process.env.NODE_ENV': JSON.stringify('development')
+            'process.env.NODE_ENV': JSON.stringify('production')
         }),
         html({
             template: 'public/index.html',
@@ -43,13 +47,13 @@ const options = (target, legacy) => ({
         }),
         terser({
             compress: {
-                passes: 5
+                passes: 2
             }
         })
     ]
 })
 
 export default [
-    options('> 0.5%', true),
+    // options('> 0.5%', true),
     options('> 5%'),
 ]
