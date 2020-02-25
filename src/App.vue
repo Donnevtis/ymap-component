@@ -84,7 +84,8 @@
 <script>
 import routeInput from "./components/RouteInput.vue";
 import Coordinates from "./assets/moscow.json";
-import uuid from "uuid/v4";
+import { v4 as uuid } from "uuid";
+import axios from "axios";
 
 export default {
   name: "Ymap",
@@ -178,35 +179,32 @@ export default {
     },
     getSum() {
       this.isSubmit = false;
-      fetch(
+
+      axios(
         "https://bkdqyto4m7.execute-api.us-east-1.amazonaws.com/prod/count",
         {
           method: "POST",
-          mode: "cors",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify(this.distance)
+          data: JSON.stringify(this.distance)
         }
-      )
-        .then(res => res.json())
-        .then(res => {
-          this.sum = res;
-          this.isSubmit = this.isCounted = true;
-        });
+      ).then(res => {
+        this.sum = res.data;
+        this.isSubmit = this.isCounted = true;
+      });
     },
     submit() {
       const { inside, outside } = this.distance;
       this.loading = true;
-      fetch(
+      axios(
         "https://bkdqyto4m7.execute-api.us-east-1.amazonaws.com/prod/submit",
         {
           method: "POST",
-          mode: "cors",
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({
+          data: JSON.stringify({
             inside,
             outside,
             adresses: this.pointsArray,
@@ -214,7 +212,7 @@ export default {
           })
         }
       ).then(res => {
-        if (res.ok) {
+        if (res.status == 200) {
           this.loading = false;
           this.isSuccess = true;
         }
