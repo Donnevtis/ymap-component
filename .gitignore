@@ -2,7 +2,14 @@
 node_modules
 /dist
 
+# server files
+.serverless
+jspm_packages
+
 # local env files
+env.yml
+env.js
+.env*
 .env.local
 .env.*.local
 
@@ -12,6 +19,7 @@ yarn-debug.log*
 yarn-error.log*
 
 #lock files
+pnpm-lock.yaml
 
 # Editor directories and files
 .idea

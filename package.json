@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "install": "pnpm --prefix ./backend install",
     "serve": "vue-cli-service serve",
     "build": "rollup -c --environment BUILD:production",
+    "deploy": "cd backend && serverless deploy",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "axios": "^0.19.2",
     "core-js": "^3.6.4",
+    "rollup-plugin-cleaner": "^1.0.0",
     "uuid": "^3.4.0",
     "vue": "^2.6.11"
   },

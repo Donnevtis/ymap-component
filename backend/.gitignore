@@ -1,0 +1,12 @@
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
+
+#lock files
+pnpm-lock.yaml
+
+#enviropment files
+env.yml
