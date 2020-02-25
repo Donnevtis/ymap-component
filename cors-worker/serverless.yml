@@ -1,0 +1,14 @@
+name: backend-monolith
+
+provider:
+  environment:
+    MAIL_HOST: ${file(env.yml):MAIL_HOST}
+    MAIL_PORT: ${file(env.yml):MAIL_PORT}
+    MAIL_USER: ${file(env.yml):MAIL_USER}
+    MAIL_PASS: ${file(env.yml):MAIL_PASS}
+backend:
+  component: '@serverless/backend'
+  inputs:
+    code:
+      src: code
+      hook: pnpm run build
