@@ -1,6 +1,6 @@
-import Vue from 'vue';
-import App from './App.vue';
-import axios from 'axios';
+import Vue from 'vue'
+import App from './App.vue'
+import axios from 'axios'
 
 function link() {
     const apiKey = "931c09e3-a95f-458e-ad4a-bfd52f0a7338",
@@ -11,7 +11,7 @@ function link() {
     const mode = debug ? "debug" : "release";
     const settingsPart = `lang=${lang}${apiKey &&
         `&apikey=${apiKey}`}&mode=${mode}&coordorder=${coordorder}`
-    return `https://api-maps.yandex.ru/${version}/?${settingsPart}`;
+    return `https://api-maps.yandex.ru/${version}/?${settingsPart}`
 }
 
 axios.get(link())
