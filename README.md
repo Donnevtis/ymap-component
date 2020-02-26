@@ -9,14 +9,14 @@
 
 ## Стек:
 
-- Фронтенд:
+- **Фронтенд:**
   - Vue.js
   - Vue CLI
   - Bootstrap 4
   - Яндекс.Карты JavaScript API
   - Сборщик Rollup + Babel
   - Axios
-- Бэкенд:
+- **Бэкенд:**
   - Serverless framework
   - AWS Lambda function
   - Nodemailer
