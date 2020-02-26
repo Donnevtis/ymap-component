@@ -1,18 +1,25 @@
 <template>
   <div class="input-group mb-3">
-    <div class="input-group-prepend"></div>
     <input
-      @keyup.enter="onInput"
+      type="text"
       class="form-control"
+      @keyup.enter="onInput"
       :autofocus="index == 0"
       aria-describedby="adress-input"
-      type="text"
       :id="'suggest' + index"
       :placeholder="point.placeholder"
       ref="input"
       :required="index < 2 ? true : false"
     />
-    <button class="btn btn-outline-secondary" @click="clearField" type="button">удалить</button>
+
+    <div class="input-group-append">
+      <button
+        class="btn btn-outline-secondary"
+        aria-label="Close"
+        type="button"
+        @click="clearField"
+      >удалить</button>
+    </div>
   </div>
 </template>
 
@@ -65,13 +72,8 @@ export default {
   position: relative;
   width: 100%;
 }
-.input-close {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  right: 0;
-  opacity: 0.7;
-  cursor: pointer;
-  background: url("../assets/close.svg") center no-repeat;
+.form-control {
+  border-top-left-radius: 0.25rem !important ;
+  border-bottom-left-radius: 0.25rem !important ;
 }
 </style>

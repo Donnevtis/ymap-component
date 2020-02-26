@@ -1,81 +1,77 @@
 <template>
-  <div id="Ymap" class="container">
-    <div class="row">
-      <div id="map" class="col-md-8 col-sm-12 mb-4 mt-4 order-md-4">
-        <div v-if="!mapIsLoaded" class="spinner">
-          <div class="cube1"></div>
-          <div class="cube2"></div>
-        </div>
-      </div>
+  <div
+    id="Ymap"
+    class="container py-3 px-1 d-md-flex flex-md-row justify-content-between"
+    style="height:100vh"
+  >
+    <div class="col-md-4 col-sm-12 mb-3">
+      <routeInput
+        v-for="(point, index) in points"
+        :key="point.id"
+        :point="point"
+        :index="index"
+        v-model="point.adress"
+        @input="addRoute"
+        @clearInput="clearInput"
+        @focus="focus"
+        ref="routeInput"
+      />
 
-      <div class="col-md-4 col-sm-12 mt-4 mb-4">
-        <div class="row">
-          <routeInput
-            v-for="(point, index) in points"
-            :key="point.id"
-            :point="point"
-            :index="index"
-            v-model="point.adress"
-            @input="addRoute"
-            @clearInput="clearInput"
-            @focus="focus"
-            ref="routeInput"
+      <button
+        class="btn btn-secondary btn-md btn-block"
+        @click.prevent="addPoint"
+      >Добавить точку назначения</button>
+
+      <br />
+      <h6>
+        Общее расстояние:
+        <span>{{distance.all + ' км'}}</span>
+      </h6>
+      <h6 v-if="distance.inside">Расстояние в пределах МКАД: {{distance.inside + ' км'}}</h6>
+      <h6 v-if="distance.outside">Расстояние за МКАД: {{distance.outside + ' км'}}</h6>
+      <h6>
+        Сумма:
+        <span v-if="isSubmit">{{sum + '₽'}}</span>
+        <div v-else class="spinner-border text-secondary spinner-border-sm" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+      </h6>
+
+      <form v-if="isCounted" @submit.prevent="submit">
+        <div class="form-group">
+          <label for="inputEmail">Введите адрес для получения данных о заказе</label>
+          <input
+            type="email"
+            class="form-control"
+            id="inputEmail"
+            aria-describedby="emailHelp"
+            placeholder="email@example.com"
+            name="email"
+            required
+            v-model="email"
           />
         </div>
 
-        <div class="row">
-          <button
-            class="btn btn-secondary btn-md btn-block"
-            @click.prevent="addPoint"
-          >Добавить точку назначения</button>
-        </div>
+        <input
+          :disabled="isSuccess|| loading"
+          type="submit"
+          class="btn btn-primary"
+          value="Отправить"
+        />
 
-        <br />
-        <h6>
-          Общее расстояние:
-          <span>{{distance.all + ' км'}}</span>
-        </h6>
-        <h6 v-if="distance.inside">Расстояние в пределах МКАД: {{distance.inside + ' км'}}</h6>
-        <h6 v-if="distance.outside">Расстояние за МКАД: {{distance.outside + ' км'}}</h6>
-        <h6>
-          Сумма:
-          <span v-if="isSubmit">{{sum + '₽'}}</span>
-          <div v-else class="spinner-border text-secondary spinner-border-sm" role="status">
+        <div v-if="isSuccess" class="mt-3 alert alert-success" role="alert">Заявка принята</div>
+
+        <div v-else-if="loading" class="d-flex justify-content-center">
+          <div class="spinner-grow text-secondary" role="status">
             <span class="sr-only">Loading...</span>
           </div>
-        </h6>
-        <br />
-
-        <form v-if="isCounted" @submit.prevent="submit">
-          <div class="form-group">
-            <label for="inputEmail">Введите адрес для получения данных о заказе</label>
-            <input
-              type="email"
-              class="form-control"
-              id="inputEmail"
-              aria-describedby="emailHelp"
-              placeholder="email@example.com"
-              name="email"
-              required
-              v-model="email"
-            />
-          </div>
-
-          <input
-            :disabled="isSuccess|| loading"
-            type="submit"
-            class="btn btn-primary"
-            value="Отправить"
-          />
-
-          <div v-if="isSuccess" class="mt-3 alert alert-success" role="alert">Заявка принята</div>
-
-          <div v-else-if="loading" class="d-flex justify-content-center">
-            <div class="spinner-grow text-secondary" role="status">
-              <span class="sr-only">Loading...</span>
-            </div>
-          </div>
-        </form>
+        </div>
+      </form>
+    </div>
+    <div id="map" class="col-md-8 mb-3">
+      <div v-if="!mapIsLoaded" class="spinner">
+        <div class="cube1"></div>
+        <div class="cube2"></div>
       </div>
     </div>
   </div>
@@ -387,12 +383,6 @@ export default {
   100% {
     transform: rotate(-360deg);
     -webkit-transform: rotate(-360deg);
-  }
-}
-
-@media (max-width: 768px) {
-  #map {
-    height: 100vmin;
   }
 }
 </style>
