@@ -1,10 +1,11 @@
 import Vue from 'vue'
 import App from './App.vue'
 import axios from 'axios'
-
+const apiKey = process.env.VUE_APP_APIKEY
+console.log(apiKey)
 function link() {
-    const apiKey = "931c09e3-a95f-458e-ad4a-bfd52f0a7338",
-        lang = "ru_RU",
+    // const apiKey = "931c09e3-a95f-458e-ad4a-bfd52f0a7338",
+    const lang = "ru_RU",
         version = "2.1",
         coordorder = "latlong",
         debug = false;

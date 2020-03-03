@@ -82,13 +82,14 @@ import routeInput from "./components/RouteInput.vue";
 import Coordinates from "./assets/moscow.json";
 import { v4 as uuid } from "uuid";
 import axios from "axios";
+const countUrl = process.env.VUE_APP_COUNTURL,
+      submitUrl = process.env.VUE_APP_SUBMITURL;
 
 export default {
   name: "Ymap",
   components: {
     routeInput
   },
-
   data() {
     return {
       email: "",
@@ -120,11 +121,13 @@ export default {
       return this.points.length;
     }
   },
+
   watch: {
     routeLength(n, o) {
       if (n < o) this.addRoute();
     }
   },
+
   methods: {
     clearInput(index) {
       this.isCounted = false;
@@ -144,11 +147,13 @@ export default {
         this.addRoute();
       }
     },
+
     focus() {
       const targets = this.$refs.routeInput;
       const empty = targets.find(item => !item.point.adress);
       if (empty) empty.focus();
     },
+
     addRoute() {
       this.isSuccess = false;
       //внести изменения в маршрут
@@ -163,6 +168,7 @@ export default {
         });
       });
     },
+
     addPoint() {
       this.isCounted = false;
       this.points.push({
@@ -173,11 +179,11 @@ export default {
       const refs = this.$refs.routeInput;
       this.$nextTick().then(() => refs[refs.length - 1].focus());
     },
+
     getSum() {
       this.isSubmit = false;
-
       axios(
-        "https://bkdqyto4m7.execute-api.us-east-1.amazonaws.com/prod/count",
+        countUrl,
         {
           method: "POST",
           headers: {
@@ -190,11 +196,12 @@ export default {
         this.isSubmit = this.isCounted = true;
       });
     },
+
     submit() {
       const { inside, outside } = this.distance;
       this.loading = true;
       axios(
-        "https://bkdqyto4m7.execute-api.us-east-1.amazonaws.com/prod/submit",
+        submitUrl,
         {
           method: "POST",
           headers: {
@@ -214,6 +221,7 @@ export default {
         }
       });
     },
+
     toCount() {
       // Получение ссылки на активный маршрут.
       const activeRoute = this.route.getActiveRoute() || null;
@@ -236,7 +244,6 @@ export default {
           });
         }
       });
-
       const routeObjects = this.ymaps
           .geoQuery(edges)
           .setOptions("visible", false)
@@ -247,9 +254,9 @@ export default {
         objectsInMoscow,
         activeRoute
       );
-
       this.getSum();
     },
+
     getMeters(geoAll, geoInside, activeRoute) {
       function* generatePathLength(geoObj) {
         for (let i = 0; i < geoObj.getLength(); i++) {
@@ -275,6 +282,7 @@ export default {
       return distances;
     }
   },
+
   mounted() {
     window.ymaps.ready(() => {
       this.ymaps = window.ymaps;
@@ -302,6 +310,7 @@ export default {
       this.mapIsLoaded = true;
     });
   },
+
   beforeDestroy() {
     this.myMap.destroy();
   }
