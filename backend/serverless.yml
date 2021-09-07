@@ -1,0 +1,32 @@
+service: worker-cors
+app: ymap-backend
+org: nevtees
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: prod
+package:
+  include:
+    - node_modules/**
+  exclude:
+    - node_modules/nodemailer/**
+functions:
+  count:
+    handler: src/count.handler
+    events:
+      - http:
+          path: '/count'
+          method: post
+          cors: true
+  submit:
+    handler: src/submit.handler
+    events:
+      - http:
+          path: '/submit'
+          method: post
+          cors: true
+    environment:
+      HOST: ${file(../env.yml):HOST}
+      USER: ${file(../env.yml):USER}
+      PASS: ${file(../env.yml):PASS}
+      PORT: ${file(../env.yml):PORT}

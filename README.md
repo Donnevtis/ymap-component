@@ -1,29 +1,57 @@
-# ymap
+# Приложение - калькулятор для сайта логистической компании.
 
-## Project setup
+## Функции:
+
+- Построение сложных маршрутов с помощью API Яндекс.Карт
+- Расчет длины маршрута и разбивка на отрезки по геообъектам (в примере включено измерение расстояния внутри/снаружи МКАД)
+- Расчет стоимости маршрута
+- Отправка заявки на email
+
+## Стек:
+
+- **Фронтенд:**
+  - Vue.js
+  - Vue CLI
+  - Bootstrap 4
+  - Яндекс.Карты JavaScript API
+  - Сборщик Rollup + Babel
+  - Axios
+- **Бэкенд:**
+  - Serverless framework
+  - AWS Lambda function
+  - Nodemailer
+
+## Установка
+
 ```
-npm install
+yarn
 ```
 
-### Compiles and hot-reloads for development
+### Режим разработки
+
 ```
-npm run serve
+yarn serve
 ```
 
-### Compiles and minifies for production
+### Сборка
+
+Приложение собирается в один файл. Для старых браузеров сборщик создает отдельный файл ymap.legacy.\*.js
+
 ```
-npm run build
+yarn build
 ```
 
-### Run your tests
+### Развертывание
+
+Для развертывания необходим serverless framework и аккаунт в Amazon Web Services.
+Для почтового сервера требуется прописать переменные окружения с настройками в корневом файле env.yml.
+
 ```
-npm run test
+yarn deploy
 ```
 
 ### Lints and fixes files
-```
-npm run lint
-```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+```
+yarn lint
+```
