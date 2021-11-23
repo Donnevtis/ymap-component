@@ -1,2 +1,2 @@
-#### Front - VueJS
-#### Back - Serverless
+#### Front - Vue.js
+#### Back - Serverless AWS Lambda
